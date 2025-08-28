@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Juego del Sistema Solar Mejorado</title>
+  <title>Juego del Sistema Solar</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
   <style>
     body, html { margin: 0; padding: 0; height: 100%; }
     #map { height: 100%; width: 100%; }
@@ -20,7 +20,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       z-index: 1000;
       font-family: Arial, sans-serif;
-      width: 220px;
+      width: 240px;
     }
     .game-panel button {
       background: #0078ff;
@@ -55,36 +55,56 @@
   </div>
 
   <script>
-    var map = L.map('map').setView([-25.280945, -57.609083], 14);
+    // Inicializar mapa
+    const map = L.map('map').setView([0, 0], 2);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19
+      attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    var planetLayers = [];
-    var planets = [];
-    var markersGroup = L.layerGroup().addTo(map);
+    let planetMarkers = [];
+    let planetLayers = [];
+    let currentPlanet = null;
+    let score = 0;
+    let attempts = 0;
+    let timer = 0;
+    let timerInterval = null;
+    let markersGroup = L.layerGroup().addTo(map);
 
-    // Variables del juego
-    var currentPlanet = null;
-    var score = 0;
-    var attempts = 0;
-    var timer = 0;
-    var timerInterval = null;
+    // Colores personalizados
+    const planetColors = {
+      Mercury: '#b0b0b0',
+      Venus: '#e6e600',
+      Earth: '#1f77b4',
+      Mars: '#ff0000',
+      Jupiter: '#d6a57a',
+      Saturn: '#f4d03f',
+      Uranus: '#00ffff',
+      Neptune: '#0000ff'
+    };
 
-    // Cargar KML con omnivore
-    var kmlLayer = omnivore.kml('solarsystem.kml')
-      .on('ready', function() {
-        map.fitBounds(this.getBounds());
+    // Cargar el KML y aplicar colores
+    const kmlLayer = omnivore.kml('solarsystem.kml', null, L.geoJson(null, {
+      style: function(feature) {
+        const name = feature.properties.name;
+        return {
+          color: planetColors[name] || '#3388ff',
+          weight: 2
+        };
+      },
+      onEachFeature: function(feature, layer) {
+        const name = feature.properties.name || 'Desconocido';
+        planetMarkers.push({ name: name, latlng: layer.getBounds().getCenter() });
+        planetLayers.push(layer);
+      }
+    })).on('ready', function() {
+      map.fitBounds(this.getBounds());
+    }).addTo(map);
 
-        this.eachLayer(function(layer) {
-          var name = layer.feature.properties.name;
-          planets.push(name);
-          layer.bindPopup("<b>" + name + "</b>");
-          planetLayers.push(layer);
-        });
-      })
-      .addTo(map);
+    // Función para calcular distancia en metros
+    function getDistance(latlng1, latlng2) {
+      return map.distance(latlng1, latlng2);
+    }
 
     // Iniciar juego
     function startGame() {
@@ -94,53 +114,39 @@
       document.getElementById('score').textContent = "Puntos: " + score;
       document.getElementById('attempts').textContent = "Intentos: " + attempts;
       document.getElementById('timer').textContent = "Tiempo: 0s";
-
-      // Reset markers
       markersGroup.clearLayers();
-
-      // Iniciar cronómetro
       clearInterval(timerInterval);
-      timerInterval = setInterval(function() {
+      timerInterval = setInterval(() => {
         timer++;
         document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
       }, 1000);
-
       nextQuestion();
     }
 
+    // Seleccionar planeta aleatorio
     function nextQuestion() {
-      currentPlanet = planets[Math.floor(Math.random() * planets.length)];
-      document.getElementById('question').textContent = "¿Dónde está " + currentPlanet + "?";
+      const randomIndex = Math.floor(Math.random() * planetMarkers.length);
+      currentPlanet = planetMarkers[randomIndex];
+      document.getElementById('question').textContent = "¿Dónde está " + currentPlanet.name + "?";
     }
 
+    // Evento clic en el mapa
     map.on('click', function(e) {
       if (!currentPlanet) return;
       attempts++;
       document.getElementById('attempts').textContent = "Intentos: " + attempts;
 
-      var found = false;
+      const distance = getDistance(e.latlng, currentPlanet.latlng);
 
-      planetLayers.forEach(function(layer) {
-        if (layer.feature.properties.name === currentPlanet) {
-          if (layer.getBounds().contains(e.latlng)) {
-            found = true;
-
-            // Agregar marcador en el planeta correcto
-            var center = layer.getBounds().getCenter();
-            var marker = L.marker(center).addTo(markersGroup);
-            marker.bindPopup("¡Correcto! " + currentPlanet).openPopup();
-
-            alert("¡Correcto! Encontraste " + currentPlanet);
-            score++;
-            document.getElementById('score').textContent = "Puntos: " + score;
-
-            nextQuestion();
-          }
-        }
-      });
-
-      if (!found) {
-        alert("Incorrecto, intenta otra vez.");
+      if (distance < 500000) { // margen 500 km
+        const marker = L.marker(currentPlanet.latlng).addTo(markersGroup);
+        marker.bindPopup("¡Correcto! " + currentPlanet.name).openPopup();
+        alert(`¡Correcto! Encontraste ${currentPlanet.name}`);
+        score++;
+        document.getElementById('score').textContent = "Puntos: " + score;
+        nextQuestion();
+      } else {
+        alert(`Incorrecto. Estás a ${(distance/1000).toFixed(1)} km de ${currentPlanet.name}`);
       }
     });
 
