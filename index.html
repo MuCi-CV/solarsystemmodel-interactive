@@ -76,7 +76,7 @@
 
   <script>
     // Inicializar mapa
-    const map = L.map('map').setView([0, 0], 2);
+    const map = L.map('map').setView([-25.280945, -57.609083], 10);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
@@ -100,6 +100,41 @@
       'Uranus': '#87CEEB', // Azul celeste
       'Neptune': '#4169E1'  // Azul real
     };
+
+    const translations = {
+      'Mercury': 'Mercurio',
+      'Venus': 'Venus',
+      'Earth': 'Tierra',
+      'Mars': 'Marte',
+      'Jupiter': 'Júpiter',
+      'Saturn': 'Saturno',
+      'Uranus': 'Urano',
+      'Neptune': 'Neptuno',
+      'Sun': 'Sol',
+      // Agrega las traducciones de las descripciones del KML aquí
+      'The sun is the center of the solar system.Model distancesDiameter of sun (average): 800.0 cm.Model scale: 1 : 174,000,000Lat: -25.280945, Lon: -57.609083Real distancesDiameter of sun (average): 1,392,000 km.':
+        'El sol es el centro del sistema solar. Distancias del modelo: Diámetro del sol (promedio): 800.0 cm. Escala del modelo: 1 : 174,000,000. Lat: -25.280945, Lon: -57.609083. Distancias reales: Diámetro del sol (promedio): 1,392,000 km.',
+      'Diameter of Mercury (average): 4,879 km. Distance from sun, average: 57,910,000 km.':
+        'Diámetro de Mercurio (promedio): 4,879 km. Distancia promedio al sol: 57,910,000 km.',
+      'Diameter of Venus (average): 12,104 km. Distance from sun, average: 108,200,000 km.':
+        'Diámetro de Venus (promedio): 12,104 km. Distancia promedio al sol: 108,200,000 km.',
+      'Diameter of Earth (average): 12,742 km. Distance from sun, average: 149,600,000 km.':
+        'Diámetro de la Tierra (promedio): 12,742 km. Distancia promedio al sol: 149,600,000 km.',
+      'Diameter of Mars (average): 6,779 km. Distance from sun, average: 227,900,000 km.':
+        'Diámetro de Marte (promedio): 6,779 km. Distancia promedio al sol: 227,900,000 km.',
+      'Diameter of Jupiter (average): 139,820 km. Distance from sun, average: 778,500,000 km.':
+        'Diámetro de Júpiter (promedio): 139,820 km. Distancia promedio al sol: 778,500,000 km.',
+      'Diameter of Saturn (average): 116,460 km. Distance from sun, average: 1,434,000,000 km.':
+        'Diámetro de Saturno (promedio): 116,460 km. Distancia promedio al sol: 1,434,000,000 km.',
+      'Diameter of Uranus (average): 50,724 km. Distance from sun, average: 2,871,000,000 km.':
+        'Diámetro de Urano (promedio): 50,724 km. Distancia promedio al sol: 2,871,000,000 km.',
+      'Diameter of Neptune (average): 49,244 km. Distance from sun, average: 4,495,000,000 km.':
+        'Diámetro de Neptuno (promedio): 49,244 km. Distancia promedio al sol: 4,495,000,000 km.'
+    };
+
+    function translate(key) {
+      return translations[key] || key;
+    }
 
     // Cargar el KML y almacenar la información de los planetas
     const kmlLayer = omnivore.kml('solarsystem.kml', null, L.geoJson(null, {
@@ -138,9 +173,13 @@
                 document.getElementById('attempts').textContent = "Intentos: " + attempts;
 
                 if (feature.properties.name.split(' - ')[0] === currentPlanet.name) {
+                  
+                  const translatedName = translate(currentPlanet.name);
+                  const translatedDescription = translate(currentPlanet.description);
+
                   const popupContent = `
-                    <h4>¡Correcto! ¡Encontraste ${currentPlanet.name}!</h4>
-                    <p><b>Información sobre ${currentPlanet.name}:</b><br>${currentPlanet.description}</p>
+                    <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
+                    <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
                   `;
                   
                   L.marker(e.latlng).addTo(markersGroup)
@@ -160,7 +199,48 @@
         }
       }
     })).on('ready', function() {
-      map.fitBounds(this.getBounds());
+        // Ordenar las capas de la más lejana a la más cercana al sol
+        const sunLatLng = L.latLng(-25.280945, -57.609083); // Coordenadas del Sol
+        planetLayers.sort((a, b) => {
+            const distanceA = a.getBounds().getCenter().distanceTo(sunLatLng);
+            const distanceB = b.getBounds().getCenter().distanceTo(sunLatLng);
+            return distanceB - distanceA; // Orden descendente
+        });
+
+        // Agregar las capas al mapa en el orden correcto y asignar los eventos
+        planetLayers.forEach(layer => {
+            layer.addTo(map);
+            const name = layer.feature.properties.name.split(' - ')[0];
+            const planetInfo = planetData[name];
+            
+            layer.on('click', function(e) {
+                if (!currentPlanet) return;
+                attempts++;
+                document.getElementById('attempts').textContent = "Intentos: " + attempts;
+
+                if (name === currentPlanet.name) {
+                const translatedName = translate(currentPlanet.name);
+                const translatedDescription = translate(currentPlanet.description);
+                const popupContent = `
+                    <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
+                    <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
+                `;
+                
+                L.marker(e.latlng).addTo(markersGroup)
+                    .bindPopup(popupContent)
+                    .openPopup();
+                    
+                score++;
+                document.getElementById('score').textContent = "Puntos: " + score;
+                nextQuestion();
+                } else {
+                const clickedName = translate(name);
+                alert(`Incorrecto. Ese es el planeta ${clickedName}. Intenta de nuevo.`);
+                }
+            });
+        });
+        
+        map.fitBounds(this.getBounds());
     }).addTo(map);
 
     function startGame() {
