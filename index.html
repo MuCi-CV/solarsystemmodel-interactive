@@ -39,6 +39,26 @@
       margin-top: 10px;
       font-size: 14px;
     }
+    .leaflet-popup-content-wrapper {
+      background-color: #f7f7f7;
+      border-radius: 8px;
+      padding: 15px;
+    }
+    .leaflet-popup-content-wrapper .leaflet-popup-content {
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .leaflet-popup-tip {
+      background-color: #f7f7f7;
+    }
+    .leaflet-popup-content h4 {
+      margin: 0 0 10px;
+      color: #333;
+    }
+    .leaflet-popup-content b {
+      color: #0078ff;
+    }
   </style>
 </head>
 <body>
@@ -62,8 +82,7 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    let planetMarkers = [];
-    let planetLayers = [];
+    let planetData = {};
     let currentPlanet = null;
     let score = 0;
     let attempts = 0;
@@ -71,42 +90,79 @@
     let timerInterval = null;
     let markersGroup = L.layerGroup().addTo(map);
 
-    // Colores personalizados
     const planetColors = {
-      Mercury: '#b0b0b0',
-      Venus: '#e6e600',
-      Earth: '#1f77b4',
-      Mars: '#ff0000',
-      Jupiter: '#d6a57a',
-      Saturn: '#f4d03f',
-      Uranus: '#00ffff',
-      Neptune: '#0000ff'
+      'Mercury': '#A9A9A9', // Gris oscuro
+      'Venus': '#e6e600', // Amarillo
+      'Earth': '#007FFF', // Azul brillante
+      'Mars': '#FF4500', // Naranja rojizo
+      'Jupiter': '#D2B48C', // Marrón claro
+      'Saturn': '#FFD700', // Dorado
+      'Uranus': '#87CEEB', // Azul celeste
+      'Neptune': '#4169E1'  // Azul real
     };
 
-    // Cargar el KML y aplicar colores
+    // Cargar el KML y almacenar la información de los planetas
     const kmlLayer = omnivore.kml('solarsystem.kml', null, L.geoJson(null, {
       style: function(feature) {
-        const name = feature.properties.name;
+        const name = feature.properties.name.split(' - ')[0];
         return {
           color: planetColors[name] || '#3388ff',
           weight: 2
         };
       },
       onEachFeature: function(feature, layer) {
-        const name = feature.properties.name || 'Desconocido';
-        planetMarkers.push({ name: name, latlng: layer.getBounds().getCenter() });
-        planetLayers.push(layer);
+        if (feature.properties && feature.properties.name) {
+          const name = feature.properties.name.split(' - ')[0]; // Limpia el nombre
+          
+          if (name !== 'Sun') {
+            const description = feature.properties.description;
+            if (description) {
+              const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
+              const cleanDescription = htmlContent.replace(/<[^>]*>/g, '').replace(/[\n\t]/g, '');
+              
+              const planetInfo = {
+                name: name,
+                latlng: layer.getBounds().getCenter(),
+                description: cleanDescription,
+                layer: layer
+              };
+              
+              if (!planetData[name]) {
+                planetData[name] = planetInfo;
+              }
+              
+              // Añadir evento de clic directamente a la capa de la órbita
+              layer.on('click', function(e) {
+                if (!currentPlanet) return;
+                attempts++;
+                document.getElementById('attempts').textContent = "Intentos: " + attempts;
+
+                if (feature.properties.name.split(' - ')[0] === currentPlanet.name) {
+                  const popupContent = `
+                    <h4>¡Correcto! ¡Encontraste ${currentPlanet.name}!</h4>
+                    <p><b>Información sobre ${currentPlanet.name}:</b><br>${currentPlanet.description}</p>
+                  `;
+                  
+                  L.marker(e.latlng).addTo(markersGroup)
+                    .bindPopup(popupContent)
+                    .openPopup();
+                    
+                  score++;
+                  document.getElementById('score').textContent = "Puntos: " + score;
+                  nextQuestion();
+                } else {
+                  const clickedName = feature.properties.name.split(' - ')[0];
+                  alert(`Incorrecto. Ese es el planeta ${clickedName}. Intenta de nuevo.`);
+                }
+              });
+            }
+          }
+        }
       }
     })).on('ready', function() {
       map.fitBounds(this.getBounds());
     }).addTo(map);
 
-    // Función para calcular distancia en metros
-    function getDistance(latlng1, latlng2) {
-      return map.distance(latlng1, latlng2);
-    }
-
-    // Iniciar juego
     function startGame() {
       score = 0;
       attempts = 0;
@@ -123,34 +179,29 @@
       nextQuestion();
     }
 
-    // Seleccionar planeta aleatorio
     function nextQuestion() {
-      const randomIndex = Math.floor(Math.random() * planetMarkers.length);
-      currentPlanet = planetMarkers[randomIndex];
+      const planets = Object.values(planetData);
+      const randomIndex = Math.floor(Math.random() * planets.length);
+      currentPlanet = planets[randomIndex];
       document.getElementById('question').textContent = "¿Dónde está " + currentPlanet.name + "?";
     }
 
-    // Evento clic en el mapa
+    // Manejar clics fuera de las órbitas
     map.on('click', function(e) {
       if (!currentPlanet) return;
-      attempts++;
-      document.getElementById('attempts').textContent = "Intentos: " + attempts;
-
-      const distance = getDistance(e.latlng, currentPlanet.latlng);
-
-      if (distance < 500000) { // margen 500 km
-        const marker = L.marker(currentPlanet.latlng).addTo(markersGroup);
-        marker.bindPopup("¡Correcto! " + currentPlanet.name).openPopup();
-        alert(`¡Correcto! Encontraste ${currentPlanet.name}`);
-        score++;
-        document.getElementById('score').textContent = "Puntos: " + score;
-        nextQuestion();
-      } else {
-        alert(`Incorrecto. Estás a ${(distance/1000).toFixed(1)} km de ${currentPlanet.name}`);
+      const layers = map.getLayers().filter(l => l instanceof L.Path);
+      let clickedOnOrbit = false;
+      layers.forEach(layer => {
+        if (layer.contains(e.latlng)) {
+          clickedOnOrbit = true;
+        }
+      });
+      if (!clickedOnOrbit) {
+        alert("Incorrecto. Tienes que hacer clic en una órbita.");
       }
     });
 
     document.getElementById('startGame').addEventListener('click', startGame);
-  </script>
+</script>
 </body>
 </html>
