@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego del Sistema Solar Mejorado</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; width: 100%; }
+    .game-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+      font-family: Arial, sans-serif;
+      width: 220px;
+    }
+    .game-panel button {
+      background: #0078ff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      margin-top: 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .game-panel button:hover {
+      background: #005fcc;
+    }
+    .stats {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="game-panel">
+    <h3>Juego: ¿Dónde está...?</h3>
+    <p id="question">Haz clic en el planeta correcto.</p>
+    <button id="startGame">Empezar</button>
+    <div class="stats">
+      <p id="score">Puntos: 0</p>
+      <p id="attempts">Intentos: 0</p>
+      <p id="timer">Tiempo: 0s</p>
+    </div>
+  </div>
+
+  <script>
+    var map = L.map('map').setView([-25.280945, -57.609083], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    var planetLayers = [];
+    var planets = [];
+    var markersGroup = L.layerGroup().addTo(map);
+
+    // Variables del juego
+    var currentPlanet = null;
+    var score = 0;
+    var attempts = 0;
+    var timer = 0;
+    var timerInterval = null;
+
+    // Cargar KML con omnivore
+    var kmlLayer = omnivore.kml('solarsystem.kml')
+      .on('ready', function() {
+        map.fitBounds(this.getBounds());
+
+        this.eachLayer(function(layer) {
+          var name = layer.feature.properties.name;
+          planets.push(name);
+          layer.bindPopup("<b>" + name + "</b>");
+          planetLayers.push(layer);
+        });
+      })
+      .addTo(map);
+
+    // Iniciar juego
+    function startGame() {
+      score = 0;
+      attempts = 0;
+      timer = 0;
+      document.getElementById('score').textContent = "Puntos: " + score;
+      document.getElementById('attempts').textContent = "Intentos: " + attempts;
+      document.getElementById('timer').textContent = "Tiempo: 0s";
+
+      // Reset markers
+      markersGroup.clearLayers();
+
+      // Iniciar cronómetro
+      clearInterval(timerInterval);
+      timerInterval = setInterval(function() {
+        timer++;
+        document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
+      }, 1000);
+
+      nextQuestion();
+    }
+
+    function nextQuestion() {
+      currentPlanet = planets[Math.floor(Math.random() * planets.length)];
+      document.getElementById('question').textContent = "¿Dónde está " + currentPlanet + "?";
+    }
+
+    map.on('click', function(e) {
+      if (!currentPlanet) return;
+      attempts++;
+      document.getElementById('attempts').textContent = "Intentos: " + attempts;
+
+      var found = false;
+
+      planetLayers.forEach(function(layer) {
+        if (layer.feature.properties.name === currentPlanet) {
+          if (layer.getBounds().contains(e.latlng)) {
+            found = true;
+
+            // Agregar marcador en el planeta correcto
+            var center = layer.getBounds().getCenter();
+            var marker = L.marker(center).addTo(markersGroup);
+            marker.bindPopup("¡Correcto! " + currentPlanet).openPopup();
+
+            alert("¡Correcto! Encontraste " + currentPlanet);
+            score++;
+            document.getElementById('score').textContent = "Puntos: " + score;
+
+            nextQuestion();
+          }
+        }
+      });
+
+      if (!found) {
+        alert("Incorrecto, intenta otra vez.");
+      }
+    });
+
+    document.getElementById('startGame').addEventListener('click', startGame);
+  </script>
+</body>
+</html>
