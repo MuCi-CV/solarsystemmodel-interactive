@@ -76,13 +76,14 @@
 
   <script>
     // Inicializar mapa
-    const map = L.map('map').setView([-25.280945, -57.609083], 10);
+    const map = L.map('map').setView([-25.280945, -57.609083], 2); 
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     let planetData = {};
+    let planetLayers = []; // Nuevo array para almacenar las capas
     let currentPlanet = null;
     let score = 0;
     let attempts = 0;
@@ -90,17 +91,20 @@
     let timerInterval = null;
     let markersGroup = L.layerGroup().addTo(map);
 
+    // Colores de los planetas
     const planetColors = {
-      'Mercury': '#A9A9A9', // Gris oscuro
-      'Venus': '#e6e600', // Amarillo
-      'Earth': '#007FFF', // Azul brillante
-      'Mars': '#FF4500', // Naranja rojizo
-      'Jupiter': '#D2B48C', // Marrón claro
-      'Saturn': '#FFD700', // Dorado
-      'Uranus': '#87CEEB', // Azul celeste
-      'Neptune': '#4169E1'  // Azul real
+      'Mercury': '#A9A9A9',
+      'Venus': '#e6e600',
+      'Earth': '#007FFF',
+      'Mars': '#FF4500',
+      'Jupiter': '#D2B48C',
+      'Saturn': '#FFD700',
+      'Uranus': '#87CEEB',
+      'Neptune': '#4169E1',
+      'Pluto': '#D3D3D3' // Agregando a Plutón
     };
 
+    // Traducciones de nombres y descripciones de planetas
     const translations = {
       'Mercury': 'Mercurio',
       'Venus': 'Venus',
@@ -110,26 +114,17 @@
       'Saturn': 'Saturno',
       'Uranus': 'Urano',
       'Neptune': 'Neptuno',
+      'Pluto': 'Plutón',
       'Sun': 'Sol',
-      // Agrega las traducciones de las descripciones del KML aquí
-      'The sun is the center of the solar system.Model distancesDiameter of sun (average): 800.0 cm.Model scale: 1 : 174,000,000Lat: -25.280945, Lon: -57.609083Real distancesDiameter of sun (average): 1,392,000 km.':
-        'El sol es el centro del sistema solar. Distancias del modelo: Diámetro del sol (promedio): 800.0 cm. Escala del modelo: 1 : 174,000,000. Lat: -25.280945, Lon: -57.609083. Distancias reales: Diámetro del sol (promedio): 1,392,000 km.',
-      'Diameter of Mercury (average): 4,879 km. Distance from sun, average: 57,910,000 km.':
-        'Diámetro de Mercurio (promedio): 4,879 km. Distancia promedio al sol: 57,910,000 km.',
-      'Diameter of Venus (average): 12,104 km. Distance from sun, average: 108,200,000 km.':
-        'Diámetro de Venus (promedio): 12,104 km. Distancia promedio al sol: 108,200,000 km.',
-      'Diameter of Earth (average): 12,742 km. Distance from sun, average: 149,600,000 km.':
-        'Diámetro de la Tierra (promedio): 12,742 km. Distancia promedio al sol: 149,600,000 km.',
-      'Diameter of Mars (average): 6,779 km. Distance from sun, average: 227,900,000 km.':
-        'Diámetro de Marte (promedio): 6,779 km. Distancia promedio al sol: 227,900,000 km.',
-      'Diameter of Jupiter (average): 139,820 km. Distance from sun, average: 778,500,000 km.':
-        'Diámetro de Júpiter (promedio): 139,820 km. Distancia promedio al sol: 778,500,000 km.',
-      'Diameter of Saturn (average): 116,460 km. Distance from sun, average: 1,434,000,000 km.':
-        'Diámetro de Saturno (promedio): 116,460 km. Distancia promedio al sol: 1,434,000,000 km.',
-      'Diameter of Uranus (average): 50,724 km. Distance from sun, average: 2,871,000,000 km.':
-        'Diámetro de Urano (promedio): 50,724 km. Distancia promedio al sol: 2,871,000,000 km.',
-      'Diameter of Neptune (average): 49,244 km. Distance from sun, average: 4,495,000,000 km.':
-        'Diámetro de Neptuno (promedio): 49,244 km. Distancia promedio al sol: 4,495,000,000 km.'
+      'Diameter of Mercury (average): 4,879 km. Distance from sun, average: 57,910,000 km.': 'Diámetro de Mercurio (promedio): 4,879 km. Distancia promedio al sol: 57,910,000 km.',
+      'Diameter of Venus (average): 12,104 km. Distance from sun, average: 108,200,000 km.': 'Diámetro de Venus (promedio): 12,104 km. Distancia promedio al sol: 108,200,000 km.',
+      'Diameter of Earth (average): 12,742 km. Distance from sun, average: 149,600,000 km.': 'Diámetro de la Tierra (promedio): 12,742 km. Distancia promedio al sol: 149,600,000 km.',
+      'Diameter of Mars (average): 6,779 km. Distance from sun, average: 227,900,000 km.': 'Diámetro de Marte (promedio): 6,779 km. Distancia promedio al sol: 227,900,000 km.',
+      'Diameter of Jupiter (average): 139,820 km. Distance from sun, average: 778,500,000 km.': 'Diámetro de Júpiter (promedio): 139,820 km. Distancia promedio al sol: 778,500,000 km.',
+      'Diameter of Saturn (average): 116,460 km. Distance from sun, average: 1,434,000,000 km.': 'Diámetro de Saturno (promedio): 116,460 km. Distancia promedio al sol: 1,434,000,000 km.',
+      'Diameter of Uranus (average): 50,724 km. Distance from sun, average: 2,871,000,000 km.': 'Diámetro de Urano (promedio): 50,724 km. Distancia promedio al sol: 2,871,000,000 km.',
+      'Diameter of Neptune (average): 49,244 km. Distance from sun, average: 4,495,000,000 km.': 'Diámetro de Neptuno (promedio): 49,244 km. Distancia promedio al sol: 4,495,000,000 km.',
+      'Diameter of Pluto (average): 2,376 km. Distance from sun, average: 5,906,000,000 km.': 'Diámetro de Plutón (promedio): 2,376 km. Distancia promedio al sol: 5,906,000,000 km.'
     };
 
     function translate(key) {
@@ -147,7 +142,7 @@
       },
       onEachFeature: function(feature, layer) {
         if (feature.properties && feature.properties.name) {
-          const name = feature.properties.name.split(' - ')[0]; // Limpia el nombre
+          const name = feature.properties.name.split(' - ')[0];
           
           if (name !== 'Sun') {
             const description = feature.properties.description;
@@ -164,83 +159,55 @@
               
               if (!planetData[name]) {
                 planetData[name] = planetInfo;
+                planetLayers.push(layer); // Almacenar la capa en el array
               }
-              
-              // Añadir evento de clic directamente a la capa de la órbita
-              layer.on('click', function(e) {
-                if (!currentPlanet) return;
-                attempts++;
-                document.getElementById('attempts').textContent = "Intentos: " + attempts;
-
-                if (feature.properties.name.split(' - ')[0] === currentPlanet.name) {
-                  
-                  const translatedName = translate(currentPlanet.name);
-                  const translatedDescription = translate(currentPlanet.description);
-
-                  const popupContent = `
-                    <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
-                    <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
-                  `;
-                  
-                  L.marker(e.latlng).addTo(markersGroup)
-                    .bindPopup(popupContent)
-                    .openPopup();
-                    
-                  score++;
-                  document.getElementById('score').textContent = "Puntos: " + score;
-                  nextQuestion();
-                } else {
-                  const clickedName = feature.properties.name.split(' - ')[0];
-                  alert(`Incorrecto. Ese es el planeta ${clickedName}. Intenta de nuevo.`);
-                }
-              });
             }
           }
         }
       }
     })).on('ready', function() {
-        // Ordenar las capas de la más lejana a la más cercana al sol
-        const sunLatLng = L.latLng(-25.280945, -57.609083); // Coordenadas del Sol
-        planetLayers.sort((a, b) => {
-            const distanceA = a.getBounds().getCenter().distanceTo(sunLatLng);
-            const distanceB = b.getBounds().getCenter().distanceTo(sunLatLng);
-            return distanceB - distanceA; // Orden descendente
-        });
+      // Ordenar las capas de la más lejana a la más cercana al sol
+      const sunLatLng = L.latLng(-25.280945, -57.609083); // Coordenadas del Sol
+      planetLayers.sort((a, b) => {
+          const distanceA = a.getBounds().getCenter().distanceTo(sunLatLng);
+          const distanceB = b.getBounds().getCenter().distanceTo(sunLatLng);
+          return distanceB - distanceA; // Orden descendente
+      });
 
-        // Agregar las capas al mapa en el orden correcto y asignar los eventos
-        planetLayers.forEach(layer => {
-            layer.addTo(map);
-            const name = layer.feature.properties.name.split(' - ')[0];
-            const planetInfo = planetData[name];
-            
-            layer.on('click', function(e) {
-                if (!currentPlanet) return;
-                attempts++;
-                document.getElementById('attempts').textContent = "Intentos: " + attempts;
+      // Agregar las capas al mapa en el orden correcto y asignar los eventos
+      planetLayers.forEach(layer => {
+          layer.addTo(map);
+          const name = layer.feature.properties.name.split(' - ')[0];
+          const planetInfo = planetData[name];
+          
+          layer.on('click', function(e) {
+            if (!currentPlanet) return;
+            attempts++;
+            document.getElementById('attempts').textContent = "Intentos: " + attempts;
 
-                if (name === currentPlanet.name) {
-                const translatedName = translate(currentPlanet.name);
-                const translatedDescription = translate(currentPlanet.description);
-                const popupContent = `
-                    <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
-                    <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
-                `;
+            if (name === currentPlanet.name) {
+              const translatedName = translate(currentPlanet.name);
+              const translatedDescription = translate(currentPlanet.description);
+              const popupContent = `
+                <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
+                <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
+              `;
+              
+              L.marker(e.latlng).addTo(markersGroup)
+                .bindPopup(popupContent)
+                .openPopup();
                 
-                L.marker(e.latlng).addTo(markersGroup)
-                    .bindPopup(popupContent)
-                    .openPopup();
-                    
-                score++;
-                document.getElementById('score').textContent = "Puntos: " + score;
-                nextQuestion();
-                } else {
-                const clickedName = translate(name);
-                alert(`Incorrecto. Ese es el planeta ${clickedName}. Intenta de nuevo.`);
-                }
-            });
-        });
-        
-        map.fitBounds(this.getBounds());
+              score++;
+              document.getElementById('score').textContent = "Puntos: " + score;
+              nextQuestion();
+            } else {
+              const clickedName = translate(name);
+              alert(`Incorrecto. Ese es el planeta ${clickedName}. Intenta de nuevo.`);
+            }
+          });
+      });
+      
+      map.fitBounds(kmlLayer.getBounds());
     }).addTo(map);
 
     function startGame() {
@@ -249,7 +216,7 @@
       timer = 0;
       document.getElementById('score').textContent = "Puntos: " + score;
       document.getElementById('attempts').textContent = "Intentos: " + attempts;
-      document.getElementById('timer').textContent = "Tiempo: 0s";
+      document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
       markersGroup.clearLayers();
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -263,15 +230,13 @@
       const planets = Object.values(planetData);
       const randomIndex = Math.floor(Math.random() * planets.length);
       currentPlanet = planets[randomIndex];
-      document.getElementById('question').textContent = "¿Dónde está " + currentPlanet.name + "?";
+      document.getElementById('question').textContent = "¿Dónde está " + translate(currentPlanet.name) + "?";
     }
 
-    // Manejar clics fuera de las órbitas
     map.on('click', function(e) {
       if (!currentPlanet) return;
-      const layers = map.getLayers().filter(l => l instanceof L.Path);
       let clickedOnOrbit = false;
-      layers.forEach(layer => {
+      planetLayers.forEach(layer => {
         if (layer.contains(e.latlng)) {
           clickedOnOrbit = true;
         }
