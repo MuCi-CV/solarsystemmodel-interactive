@@ -330,9 +330,18 @@
     };
 
     function translate(key) {
-      if (currentLang === 'es') {
-        return translations[key] || key;
+      // First, check the `uiTranslations` object for the current language.
+      if (uiTranslations[currentLang] && uiTranslations[currentLang][key]) {
+        return uiTranslations[currentLang][key];
       }
+
+      // If the key isn't in `uiTranslations`, check the `translations` object.
+      // This is a fallback for planet names and descriptions.
+      if (translations[key] && currentLang === 'es') {
+        return translations[key];
+      }
+
+      // If no translation is found, return the original key.
       return key;
     }
 
@@ -408,11 +417,11 @@
             if (!currentPlanet || !gameActive) return;
 
             if (name === currentPlanet.name) {
-              const translatedName = translate(currentPlanet.name);
-              const translatedDescription = translate(currentPlanet.description);
+              const translatedName = currentPlanet.name //translate(currentPlanet.name);
+              const translatedDescription = currentPlanet.description //translate(currentPlanet.description);
               const popupContent = `
-                <h4>¡Correcto! ¡Encontraste ${translatedName}!</h4>
-                <p><b>Información sobre ${translatedName}:</b><br>${translatedDescription}</p>
+                <h4>${translate('correct-title')}${translatedName}!</h4>
+                <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
               `;
 
               L.marker(e.latlng).addTo(markersGroup)
