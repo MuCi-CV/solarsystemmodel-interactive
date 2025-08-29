@@ -124,15 +124,15 @@
 
     // Colores de los planetas - Ahora cada planeta tiene un array de 2 colores.
     const planetColors = {
-      'Mercury': ['#b7c9D0', '#0375a4', '#025472', '#14162c'],
-      'Venus': ['#f0debe', '#f1be8b', '#bd998a', '#222d41'],
-      'Earth': ['#dfebf5', '#b8cbdb', '#6388a8', '#426b8f'],
-      'Mars': ['#91aa5f', '#d85e3c', '#a43f2f', '#091726'],
-      'Jupiter': ['#d8c2b1', '#d77133', '#C12F1E', '#572F28'],
-      'Saturn': ['#c0a480', '#736b5a', '#dab778', '#f3ce88'],
-      'Uranus': ['#d0ecf0', '#95bbbe', '#688a8d', '#3f575a'],
-      'Neptune': ['#5e96f4', '#3e44f0', '#102C5A', '#e95a53'],
-      'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99']
+      'Mercury': ['#b7c9D0', '#0375a4', '#025472', '#14162c', '#ffcc99'],
+      'Venus': ['#f0debe', '#f1be8b', '#bd998a', '#222d41', '#ff66ff'],
+      'Earth': ['#dfebf5', '#b8cbdb', '#6388a8', '#426b8f', '#ffff66'],
+      'Mars': ['#91aa5f', '#d85e3c', '#a43f2f', '#091726', '#ff3333'],
+      'Jupiter': ['#d8c2b1', '#d77133', '#C12F1E', '#572F28', '#ff3366'],
+      'Saturn': ['#c0a480', '#736b5a', '#dab778', '#f3ce88', '#ff33ff'],
+      'Uranus': ['#d0ecf0', '#95bbbe', '#688a8d', '#3f575a', '#ffcccc'],
+      'Neptune': ['#5e96f4', '#3e44f0', '#102C5A', '#e95a53', '#ffff33'],
+      'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99', '#ff9966']
     };
 
     // Traducciones de nombres y descripciones de planetas
@@ -181,7 +181,7 @@
         // Verifica si el nombre del planeta existe en planetColors antes de acceder al array
         if (planetColors[name]) {
           return {
-            color: planetColors[name][1],
+            color: planetColors[name][2],
             weight: 2
           };
         }
