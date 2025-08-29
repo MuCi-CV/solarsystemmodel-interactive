@@ -7,12 +7,12 @@
 <atom:link href="http://thinkzone.wlonk.com" />
 <Folder>
 <name>Sistema Solar</name>
-<Snippet>Scale model of the solar system.</Snippet>
+<Snippet>Modelo a escala del sistema solar.</Snippet>
 <description>
 <![CDATA[
-Scale model of the solar system.<br />
-Model scale: 1 : 174,000,000<br />
-Lat: -25.280945, Lon: -57.609083<br />
+Maqueta del sistema solar.<br />
+Escala de la maqueta: 1:174.000.000<br />
+Latitud: -25,280945, Longitud: -57,609083<br />
 ]]>
 </description>
 <visibility>1</visibility>
@@ -21,13 +21,13 @@ Lat: -25.280945, Lon: -57.609083<br />
 <Snippet></Snippet>
 <description>
 <![CDATA[
-The sun is the center of the solar system.<br />
-<b>Model distances</b><br />
-Diameter of sun (average): 800.0 cm.<br />
-Model scale: 1 : 174,000,000<br />
-Lat: -25.280945, Lon: -57.609083<br />
-<b>Real distances</b><br />
-Diameter of sun (average): 1,392,000 km.<br />
+El Sol es el centro del sistema solar.<br />
+<b>Distancias del modelo</b><br />
+Diámetro del Sol (promedio): 800,0 cm.<br />
+Escala del modelo: 1:174.000.000<br />
+Latitud: -25,280945, Longitud: -57,609083<br />
+<b>Distancias reales</b><br />
+Diámetro del Sol (promedio): 1.392.000 km.<br />
 ]]>
 </description>
 <visibility>1</visibility>
@@ -81,19 +81,19 @@ Diameter of sun (average): 1,392,000 km.<br />
 </Polygon>
 </Placemark>
 <Placemark>
-<name>Mercurio - min/max distance from sun.</name>
+<name>Mercurio - distancia mínima/máxima del sol.</name>
 <Snippet></Snippet>
 <description>
 <![CDATA[
-<b>Model distances</b><br />
-Diametro de Mercurio (average): 2.804 cm.<br />
-Distancia del sol, average: 332.8 m.<br />
-min&ndash;max: 264.4&ndash;401.3 m.<br />
-Model scale: 1 : 174,000,000<br />
-<b>Real distances</b><br />
-Diameter of Mercury (average): 4,879 km.<br />
-Distance from sun, average: 57,910,000 km.<br />
-min&ndash;max: 46,000,000&ndash;69,820,000 km.<br />
+<b>Distancias del modelo</b><br />
+Diámetro de Mercurio (promedio): 2,804 cm<br />
+Distancia media al sol: 332,8 m.<br />
+Mín.-Máx.: 264,4-401,3 m.<br />
+Escala del modelo: 1:174.000.000<br />
+<b>Distancias reales</b><br />
+Diámetro de Mercurio (promedio): 4.879 km.<br />
+Distancia media al sol: 57.910.000 km.<br />
+Mín.-Máx.: 46.000.000-69.820.000 km.<br />
 ]]>
 </description>
 <visibility>1</visibility>
@@ -245,19 +245,19 @@ min&ndash;max: 46,000,000&ndash;69,820,000 km.<br />
 </Polygon>
 </Placemark>
 <Placemark>
-<name>Mercury - average distance from sun.</name>
+<name>Mercurio - distancia media del Sol.</name>
 <Snippet></Snippet>
 <description>
 <![CDATA[
-<b>Model distances</b><br />
-Diameter of Mercury (average): 2.804 cm.<br />
-Distance from sun, average: 332.8 m.<br />
-min&ndash;max: 264.4&ndash;401.3 m.<br />
-Model scale: 1 : 174,000,000<br />
-<b>Real distances</b><br />
-Diameter of Mercury (average): 4,879 km.<br />
-Distance from sun, average: 57,910,000 km.<br />
-min&ndash;max: 46,000,000&ndash;69,820,000 km.<br />
+<b>Distancias del modelo</b><br />
+Diámetro de Mercurio (promedio): 2,804 cm.<br />
+Distancia media al Sol: 332,8 m.<br />
+Mín.-Máx.: 264,4-401,3 m.<br />
+Escala del modelo: 1:174.000.000<br />
+<b>Distancias reales</b><br />
+Diámetro de Mercurio (promedio): 4.879 km.<br />
+Distancia media al Sol: 57.910.000 km.<br />
+Mín.-Máx.: 46.000.000-69.820.000 km.<br />
 ]]>
 </description>
 <visibility>1</visibility>
@@ -334,19 +334,19 @@ min&ndash;max: 46,000,000&ndash;69,820,000 km.<br />
 </LinearRing>
 </Placemark>
 <Placemark>
-<name>Venus - min/max distance from sun.</name>
+<name>Venus - distancia mínima/máxima del sol.</name>
 <Snippet></Snippet>
 <description>
 <![CDATA[
-<b>Model distances</b><br />
-Diameter of Venus (average): 6.954 cm.<br />
-Distance from sun, average: 621.8 m.<br />
-min&ndash;max: 617.8&ndash;625.9 m.<br />
-Model scale: 1 : 174,000,000<br />
-<b>Real distances</b><br />
-Diameter of Venus (average): 12,100 km.<br />
-Distance from sun, average: 108,200,000 km.<br />
-min&ndash;max: 107,500,000&ndash;108,900,000 km.<br />
+<b>Distancias del modelo</b><br />
+Diámetro de Venus (promedio): 6,954 cm.<br />
+Distancia al Sol (promedio): 621,8 m.<br />
+Mín.-Máx.: 617,8-625,9 m.<br />
+Escala del modelo: 1:174.000.000<br />
+<b>Distancias reales</b><br />
+Diámetro de Venus (promedio): 12.100 km.<br />
+Distancia al Sol (promedio): 108.200.000 km.<br />
+Mín.-Máx.: 107.500.000-108.900.000 km.<br />
 ]]>
 </description>
 <visibility>1</visibility>

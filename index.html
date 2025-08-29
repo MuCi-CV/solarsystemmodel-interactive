@@ -238,6 +238,7 @@
 
     // Colores de los planetas - Ahora cada planeta tiene un array de 2 colores.
     const planetColors = {
+      'Sun': ['#FFE484', '#FFCC33', '#FC9601', '#D14009', '#D14009'],
       'Mercury': ['#b7c9D0', '#0375a4', '#025472', '#14162c', '#ffcc99'],
       'Venus': ['#f0debe', '#f1be8b', '#bd998a', '#222d41', '#ff66ff'],
       'Earth': ['#dfebf5', '#b8cbdb', '#6388a8', '#426b8f', '#ffff66'],
@@ -380,7 +381,7 @@
 
           console.log(name);
 
-          if (name !== 'Sun') {
+          if (name !== '') { //Sun
             const description = feature.properties.description;
             if (description) {
               const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
