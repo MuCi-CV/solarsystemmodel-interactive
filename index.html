@@ -414,32 +414,35 @@
           const name = layer.feature.properties.name.split(' - ')[0];
 
           layer.on('click', function(e) {
-            if (!currentPlanet || !gameActive) return;
+            // Lógica para mostrar información de la órbita, siempre activa
+            const info = planetData[name];
+            const translatedName = translate(info.name);
+            const translatedDescription = translate(info.description);
+            const popupContent = `
+              <h4>${translatedName}</h4>
+              <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
+            `;
+            L.marker(e.latlng).addTo(markersGroup)
+              .bindPopup(popupContent)
+              .openPopup();
 
-            if (name === currentPlanet.name) {
-              const translatedName = currentPlanet.name //translate(currentPlanet.name);
-              const translatedDescription = currentPlanet.description //translate(currentPlanet.description);
-              const popupContent = `
-                <h4>${translate('correct-title')}${translatedName}!</h4>
-                <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
-              `;
-
-              L.marker(e.latlng).addTo(markersGroup)
-                .bindPopup(popupContent)
-                .openPopup();
-
-              score++;
-              document.getElementById('score').textContent = "Puntos: " + score;
-              answeredPlanets.push(currentPlanet.name);
-              nextQuestion();
-            } else {
-              lives--;
-              document.getElementById('lives').textContent = "Vidas: " + lives;
-              const clickedName = translate(name);
-              alert(`Incorrecto. Ese es el planeta ${clickedName}. Te quedan ${lives} vidas.`);
-              if (lives <= 0) {
-                gameOver();
-              }
+            // Si el juego está activo, ejecuta la lógica del juego
+            if (gameActive) {
+                if (name === currentPlanet.name) {
+                    score++;
+                    document.getElementById('score').textContent = translate('score') + score;
+                    answeredPlanets.push(currentPlanet.name);
+                    nextQuestion();
+                } else {
+                    lives--;
+                    document.getElementById('lives').textContent = translate('lives') + lives;
+                    const clickedName = translate(name);
+                    const livesText = lives === 1 ? translate('incorrect-alert-lives-end-single') : translate('incorrect-alert-lives-end-plural');
+                    alert(`${translate('incorrect-alert-start')}${clickedName}${translate('incorrect-alert-lives-end')}${lives} ${livesText}`);
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                }
             }
           });
       });
