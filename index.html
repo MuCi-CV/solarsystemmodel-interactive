@@ -96,6 +96,8 @@
     let markersGroup = L.layerGroup().addTo(map);
     let gameActive = false;
     let answeredPlanets = [];
+    let colorSchemeIndex = 0;
+    let colorCount = 4;
 
     // Funciones para manejar Cookies
     function setCookie(cname, cvalue, exdays) {
@@ -120,17 +122,17 @@
       return "";
     }
 
-    // Colores de los planetas
+    // Colores de los planetas - Ahora cada planeta tiene un array de 2 colores.
     const planetColors = {
-      'Mercury': '#A9A9A9',
-      'Venus': '#e6e600',
-      'Earth': '#007FFF',
-      'Mars': '#FF4500',
-      'Jupiter': '#D2B48C',
-      'Saturn': '#FFD700',
-      'Uranus': '#87CEEB',
-      'Neptune': '#4169E1',
-      'Pluto': '#D3D3D3'
+      'Mercury': ['#b7c9D0', '#0375a4', '#025472', '#14162c'],
+      'Venus': ['#f0debe', '#f1be8b', '#bd998a', '#222d41'],
+      'Earth': ['#dfebf5', '#b8cbdb', '#6388a8', '#426b8f'],
+      'Mars': ['#91aa5f', '#d85e3c', '#a43f2f', '#091726'],
+      'Jupiter': ['#d8c2b1', '#d77133', '#C12F1E', '#572F28'],
+      'Saturn': ['#c0a480', '#736b5a', '#dab778', '#f3ce88'],
+      'Uranus': ['#d0ecf0', '#95bbbe', '#688a8d', '#3f575a'],
+      'Neptune': ['#5e96f4', '#3e44f0', '#102C5A', '#e95a53'],
+      'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99']
     };
 
     // Traducciones de nombres y descripciones de planetas
@@ -143,7 +145,7 @@
       'Saturn': 'Saturno',
       'Uranus': 'Urano',
       'Neptune': 'Neptuno',
-      'Pluto': 'Plutón',
+      'Pluto in the Kuiper Belt': 'Plutón',
       'Sun': 'Sol',
       'Diameter of Mercury (average): 4,879 km. Distance from sun, average: 57,910,000 km.': 'Diámetro de Mercurio (promedio): 4,879 km. Distancia promedio al sol: 57,910,000 km.',
       'Diameter of Venus (average): 12,104 km. Distance from sun, average: 108,200,000 km.': 'Diámetro de Venus (promedio): 12,104 km. Distancia promedio al sol: 108,200,000 km.',
@@ -176,14 +178,24 @@
     const kmlLayer = omnivore.kml('solarsystem.kml', null, L.geoJson(null, {
       style: function(feature) {
         const name = feature.properties.name.split(' - ')[0];
+        // Verifica si el nombre del planeta existe en planetColors antes de acceder al array
+        if (planetColors[name]) {
+          return {
+            color: planetColors[name][1],
+            weight: 2
+          };
+        }
+        // Si no existe, usa un color predeterminado (ej. para el Sol)
         return {
-          color: planetColors[name] || '#3388ff',
+          color: '#3388ff',
           weight: 2
         };
       },
       onEachFeature: function(feature, layer) {
         if (feature.properties && feature.properties.name) {
           const name = feature.properties.name.split(' - ')[0];
+
+          console.log(name);
 
           if (name !== 'Sun') {
             const description = feature.properties.description;
@@ -254,6 +266,9 @@
     }).addTo(map);
 
     function startGame() {
+      // Elige un esquema de color aleatorio para el juego
+      colorSchemeIndex = Math.floor(Math.random() * colorCount);
+
       score = 0;
       attempts = 0;
       lives = 3;
