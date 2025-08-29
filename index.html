@@ -72,6 +72,8 @@
       <p id="attempts">Intentos: 0</p>
       <p id="lives">Vidas: 3</p>
       <p id="timer">Tiempo: 0s</p>
+      <hr>
+      <div id="record" style="font-weight: bold; margin-top: 10px;"></div>
     </div>
   </div>
 
@@ -94,6 +96,29 @@
     let markersGroup = L.layerGroup().addTo(map);
     let gameActive = false;
     let answeredPlanets = [];
+
+    // Funciones para manejar Cookies
+    function setCookie(cname, cvalue, exdays) {
+      const d = new Date();
+      d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+    }
+
+    function getCookie(cname) {
+      const name = cname + "=";
+      const ca = document.cookie.split(';');
+      for(let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) === 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
 
     // Colores de los planetas
     const planetColors = {
@@ -133,6 +158,18 @@
 
     function translate(key) {
       return translations[key] || key;
+    }
+
+    // Función para mostrar el récord actual
+    function displayRecord() {
+      const recordTime = getCookie("recordTime");
+      const recordName = getCookie("recordName");
+      const recordElement = document.getElementById("record");
+      if (recordTime && recordName) {
+        recordElement.textContent = `Record: ${recordTime}s por ${recordName}`;
+      } else {
+        recordElement.textContent = "No hay récord de tiempo.";
+      }
     }
 
     // Cargar el KML y almacenar la información de los planetas
@@ -213,6 +250,7 @@
       });
 
       map.fitBounds(kmlLayer.getBounds());
+      displayRecord();
     }).addTo(map);
 
     function startGame() {
@@ -241,16 +279,16 @@
       alert(`Juego terminado. ¡Perdiste todas tus vidas! Tu puntaje final es: ${score}.`);
       resetStats();
     }
-    
+
     function resetStats() {
       score = 0;
       attempts = 0;
       lives = 3;
       timer = 0;
-      document.getElementById('score').textContent = "Puntos: " + score;
-      document.getElementById('attempts').textContent = "Intentos: " + attempts;
-      document.getElementById('lives').textContent = "Vidas: " + lives;
-      document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
+      document.getElementById('score').textContent = "Puntos: 0";
+      document.getElementById('attempts').textContent = "Intentos: 0";
+      document.getElementById('lives').textContent = "Vidas: 3";
+      document.getElementById('timer').textContent = "Tiempo: 0s";
       document.getElementById('question').textContent = "Juego terminado. Haz clic en 'Empezar' para volver a jugar.";
     }
 
@@ -267,11 +305,26 @@
       currentPlanet = remainingPlanets[randomIndex];
       document.getElementById('question').textContent = "¿Dónde está " + translate(currentPlanet.name) + "?";
     }
-    
+
     function gameWin() {
         gameActive = false;
         clearInterval(timerInterval);
-        alert(`¡Felicidades! ¡Has encontrado todos los planetas! Tu puntaje final es: ${score} y tu tiempo fue ${timer} segundos.`);
+
+        const recordTime = getCookie("recordTime");
+        const isNewRecord = !recordTime || timer < parseInt(recordTime);
+
+        if (isNewRecord) {
+            const playerName = prompt(`¡Nuevo récord! Has completado el juego en ${timer} segundos. Por favor, introduce tu nombre:`);
+            if (playerName) {
+                setCookie("recordTime", timer, 365);
+                setCookie("recordName", playerName, 365);
+                alert(`¡Felicidades, ${playerName}! Has establecido un nuevo récord.`);
+                displayRecord();
+            }
+        } else {
+            alert(`¡Felicidades! Has encontrado todos los planetas. Tu puntaje final es: ${score} y tu tiempo fue ${timer} segundos.`);
+        }
+
         resetStats();
     }
 
