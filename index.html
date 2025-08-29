@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
+  <script src="switch-checkbox.js"></script>
   <style>
     body, html { margin: 0; padding: 0; height: 100%; }
     #map { height: 100%; width: 100%; }
@@ -59,12 +60,108 @@
     .leaflet-popup-content b {
       color: #0078ff;
     }
+    .language-panel {
+      position: absolute;
+      background-color: white;
+      z-index: 1000;
+      bottom: 1rem;
+      padding: 10px;
+      width: 240px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    fieldset {
+      width: 22em;
+    }
+
+    legend {
+      font-size: 110%;
+    }
+
+    label {
+      display: block;
+      margin: 0.5em;
+      padding: 4px 4px 6px 6px;
+      border: 0 solid #005a9c;
+      border-radius: 5px;
+      width: 13em;
+    }
+
+    label .label {
+      display: inline-block;
+      width: 6em;
+      user-select: none;
+    }
+
+    label input[role="switch"] {
+      opacity: 0;
+    }
+
+    label input[role="switch"] ~ .state {
+      display: inline-block;
+      user-select: none;
+    }
+
+    label input[role="switch"] ~ .state > .container {
+      position: relative;
+      top: 2px;
+      display: inline-block;
+      border: 2px solid black;
+      width: 40px;
+      height: 20px;
+      border-radius: 11px;
+    }
+
+    label input[role="switch"] ~ .state > .container > .position {
+      position: relative;
+      top: 1px;
+      left: 2px;
+      display: inline-block;
+      border: 2px solid black;
+      border-radius: 9px;
+      width: 14px;
+      height: 14px;
+      background: black;
+      opacity: 0.6;
+    }
+
+    label input[role="switch"]:not(:checked) ~ .state span.on {
+      display: none;
+    }
+
+    label input[role="switch"]:checked ~ .state > span.off {
+      display: none;
+    }
+
+    label input[role="switch"]:checked ~ .state > .container > .position {
+      left: 20px;
+      border-color: green;
+      background: green;
+      opacity: 1;
+    }
+
+    label.focus,
+    label:hover {
+      padding: 2px 2px 4px 4px;
+      border-width: 2px;
+      outline: none;
+      background-color: #def;
+      cursor: pointer;
+    }
+
+    label.focus span.container,
+    label:hover span.container {
+      background-color: white;
+    }
+
   </style>
 </head>
 <body>
   <div id="map"></div>
   <div class="game-panel">
-    <h3>Juego: ¿Dónde está...?</h3>
+    <h3 id="game-title">Juego: ¿Dónde está...?</h3>
     <p id="question">Haz clic en el planeta correcto.</p>
     <button id="startGame">Empezar</button>
     <div class="stats">
@@ -76,6 +173,21 @@
       <div id="record" style="font-weight: bold; margin-top: 10px;"></div>
     </div>
   </div>
+  <fieldset class="language-panel">
+    <label>
+      <span class="label">Idioma</span>
+      <span class="buttons">
+        <input id="language-switch" type="checkbox" role="switch">
+        <span class="state">
+          <span class="container">
+            <span class="position"> </span>
+          </span>
+          <span class="on" aria-hidden="true">EN</span>
+          <span class="off" aria-hidden="true">ES</span>
+        </span>
+      </span>
+    </label>
+  </fieldset>
 
   <script>
     // Inicializar mapa
@@ -96,6 +208,8 @@
     let markersGroup = L.layerGroup().addTo(map);
     let gameActive = false;
     let answeredPlanets = [];
+    let currentLang = 'es';
+    let currentKML = 'solarsystem_es.kml';
     let colorSchemeIndex = 0;
     let colorCount = 4;
 
@@ -135,6 +249,63 @@
       'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99', '#ff9966']
     };
 
+    const uiTranslations = {
+      'es': {
+        'game-title': 'Juego: ¿Dónde está...?',
+        'question-initial': 'Haz clic en el planeta correcto.',
+        'button-start': 'Empezar',
+        'score': 'Puntos: ',
+        'attempts': 'Intentos: ',
+        'lives': 'Vidas: ',
+        'timer': 'Tiempo: ',
+        'record-none': 'No hay récord de tiempo.',
+        'correct-title': '¡Correcto! ¡Encontraste ',
+        'correct-info-start': 'Información sobre ',
+        'incorrect-alert-start': 'Incorrecto. Ese es el planeta ',
+        'incorrect-alert-lives-end': '. Te quedan ',
+        'incorrect-alert-lives-end-plural': ' vidas.',
+        'incorrect-alert-lives-end-single': ' vida.',
+        'game-over-alert': 'Juego terminado. ¡Perdiste todas tus vidas! Tu puntaje final es: ',
+        'game-over-question': 'Juego terminado. Haz clic en "Empezar" para volver a jugar.',
+        'wrong-click-alert': 'Incorrecto. Tienes que hacer clic en una órbita.',
+        'game-win-new-record': '¡Nuevo récord! Has completado el juego en ',
+        'game-win-name-prompt': ' segundos. Por favor, introduce tu nombre:',
+        'game-win-new-record-alert': '¡Felicidades, ',
+        'game-win-new-record-end-alert': '! Has establecido un nuevo récord.',
+        'game-win-no-record-alert': '¡Felicidades! Has encontrado todos los planetas. Tu puntaje final es: ',
+        'game-win-no-record-time': ' y tu tiempo fue ',
+        'game-win-no-record-time-end': ' segundos.',
+        'where-is': '¿Dónde está '
+      },
+      'en': {
+        'game-title': 'Game: Where is...?',
+        'question-initial': 'Click on the correct planet.',
+        'button-start': 'Start',
+        'score': 'Score: ',
+        'attempts': 'Attempts: ',
+        'lives': 'Lives: ',
+        'timer': 'Time: ',
+        'record-none': 'No time record.',
+        'correct-title': 'Correct! You found ',
+        'correct-info-start': 'Information about ',
+        'incorrect-alert-start': 'Incorrect. That is the planet ',
+        'incorrect-alert-lives-end': '. You have ',
+        'incorrect-alert-lives-end-plural': ' lives left.',
+        'incorrect-alert-lives-end-single': ' life left.',
+        'game-over-alert': 'Game over. You lost all your lives! Your final score is: ',
+        'game-over-question': 'Game over. Click "Start" to play again.',
+        'wrong-click-alert': 'Incorrect. You have to click on an orbit.',
+        'game-win-new-record': 'New record! You have completed the game in ',
+        'game-win-name-prompt': ' seconds. Please, enter your name:',
+        'game-win-new-record-alert': 'Congratulations, ',
+        'game-win-new-record-end-alert': '! You have set a new record.',
+        'game-win-no-record-alert': 'Congratulations! You found all the planets. Your final score is: ',
+        'game-win-no-record-time': ' and your time was ',
+        'game-win-no-record-time-end': ' seconds.',
+        'where-is': 'Where is '
+      }
+    };
+
     // Traducciones de nombres y descripciones de planetas
     const translations = {
       'Mercury': 'Mercurio',
@@ -159,7 +330,10 @@
     };
 
     function translate(key) {
-      return translations[key] || key;
+      if (currentLang === 'es') {
+        return translations[key] || key;
+      }
+      return key;
     }
 
     // Función para mostrar el récord actual
@@ -265,6 +439,18 @@
       displayRecord();
     }).addTo(map);
 
+    function updateUI() {
+      const lang = currentLang;
+      document.getElementById('game-title').textContent = uiTranslations[lang]['game-title'];
+      document.getElementById('question').textContent = uiTranslations[lang]['question-initial'];
+      document.getElementById('startGame').textContent = uiTranslations[lang]['button-start'];
+      document.getElementById('score').textContent = uiTranslations[lang]['score'] + score;
+      document.getElementById('attempts').textContent = uiTranslations[lang]['attempts'] + attempts;
+      document.getElementById('lives').textContent = uiTranslations[lang]['lives'] + lives;
+      document.getElementById('timer').textContent = uiTranslations[lang]['timer'] + timer + 's';
+      displayRecord();
+    }
+
     function startGame() {
       // Elige un esquema de color aleatorio para el juego
       colorSchemeIndex = Math.floor(Math.random() * colorCount);
@@ -291,7 +477,7 @@
     function gameOver() {
       gameActive = false;
       clearInterval(timerInterval);
-      alert(`Juego terminado. ¡Perdiste todas tus vidas! Tu puntaje final es: ${score}.`);
+      alert(uiTranslations[currentLang]['game-over-alert'] + score + '.');
       resetStats();
     }
 
@@ -362,6 +548,21 @@
     });
 
     document.getElementById('startGame').addEventListener('click', startGame);
+
+    document.getElementById('language-switch').addEventListener('change', function () {
+      if (window.switchStates['language-switch'] === 'on') {
+        currentLang = 'es';
+        currentKML = 'solarsystem_es.kml';
+        console.log('Es');
+      } else {
+        currentLang = 'en';
+        currentKML = 'solarsystem_en.kml';
+        console.log('EN');
+      }
+
+      updateUI();
+    });
+
   </script>
 </body>
 </html>
