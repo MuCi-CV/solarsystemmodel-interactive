@@ -22,7 +22,43 @@
       z-index: 1000;
       font-family: Arial, sans-serif;
       width: 240px;
+      transition: width 0.3s ease;
     }
+
+    /* Estilos del panel minimalista para móviles */
+    @media (max-width: 600px) {
+      .game-panel:not(.expanded) {
+        width: 180px; /* Ancho más pequeño para el modo minimal */
+      }
+      .game-panel:not(.expanded) .stats,
+      .game-panel:not(.expanded) #startGame,
+      .game-panel:not(.expanded) #question {
+        display: none;
+      }
+      .game-panel.expanded {
+        width: 240px; /* Vuelve al ancho normal */
+      }
+      #toggle-button {
+        display: inline-block;
+      }
+    }
+
+    #panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #toggle-button {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      display: none;
+    }
+
     .game-panel button {
       background: #0078ff;
       color: white;
@@ -161,7 +197,10 @@
 <body>
   <div id="map"></div>
   <div class="game-panel">
-    <h3 id="game-title">Juego: ¿Dónde está...?</h3>
+    <div id="panel-header">
+        <h3 id="game-title">Juego: ¿Dónde está...?</h3>
+        <button id="toggle-button">▼</button>
+    </div>
     <p id="question">Haz clic en el planeta correcto.</p>
     <button id="startGame">Empezar</button>
     <div class="stats">
@@ -212,6 +251,7 @@
     let currentKML = 'solarsystem_es.kml';
     let colorSchemeIndex = 0;
     let colorCount = 4;
+    let kmlLayer = null;
 
     // Funciones para manejar Cookies
     function setCookie(cname, cvalue, exdays) {
@@ -358,99 +398,117 @@
       }
     }
 
-    // Cargar el KML y almacenar la información de los planetas
-    const kmlLayer = omnivore.kml('solarsystem.kml', null, L.geoJson(null, {
-      style: function(feature) {
-        const name = feature.properties.name.split(' - ')[0];
-        // Verifica si el nombre del planeta existe en planetColors antes de acceder al array
-        if (planetColors[name]) {
+    function switchLanguage(lang) {
+        currentLang = lang;
+        let kmlFilePath = currentKML;
+        
+        if (kmlLayer) {
+            map.removeLayer(kmlLayer);
+        }
+        markersGroup.clearLayers();
+        
+        planetData = {};
+        planetLayers = [];
+        
+        loadKML(kmlFilePath);
+        updateUI();
+    }
+
+    function loadKML(kmlFilePath) {
+      // Cargar el KML y almacenar la información de los planetas
+      kmlLayer = omnivore.kml(kmlFilePath, null, L.geoJson(null, {
+        style: function(feature) {
+          const name = feature.properties.name.split(' - ')[0];
+          // Verifica si el nombre del planeta existe en planetColors antes de acceder al array
+          if (planetColors[name]) {
+            return {
+              color: planetColors[name][2],
+              weight: 2
+            };
+          }
+          // Si no existe, usa un color predeterminado (ej. para el Sol)
           return {
-            color: planetColors[name][2],
+            color: '#3388ff',
             weight: 2
           };
-        }
-        // Si no existe, usa un color predeterminado (ej. para el Sol)
-        return {
-          color: '#3388ff',
-          weight: 2
-        };
-      },
-      onEachFeature: function(feature, layer) {
-        if (feature.properties && feature.properties.name) {
-          const name = feature.properties.name.split(' - ')[0];
+        },
+        onEachFeature: function(feature, layer) {
+          if (feature.properties && feature.properties.name) {
+            const name = feature.properties.name.split(' - ')[0];
 
-          console.log(name);
+            console.log(name);
 
-          if (name !== '') { //Sun
-            const description = feature.properties.description;
-            if (description) {
-              const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
-              const cleanDescription = htmlContent.replace(/<[^>]*>/g, '').replace(/[\n\t]/g, '');
+            if (name !== '') { //Sun
+              const description = feature.properties.description;
+              if (description) {
+                const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
+                const cleanDescription = htmlContent.replace(/<[^>]*>/g, '').replace(/[\n\t]/g, '');
 
-              const planetInfo = {
-                name: name,
-                latlng: layer.getBounds().getCenter(),
-                description: cleanDescription,
-                layer: layer
-              };
+                const planetInfo = {
+                  name: name,
+                  latlng: layer.getBounds().getCenter(),
+                  description: cleanDescription,
+                  layer: layer
+                };
 
-              if (!planetData[name]) {
-                planetData[name] = planetInfo;
-                planetLayers.push(layer);
+                if (!planetData[name]) {
+                  planetData[name] = planetInfo;
+                  planetLayers.push(layer);
+                }
               }
             }
           }
         }
-      }
-    })).on('ready', function() {
-      const sunLatLng = L.latLng(-25.280945, -57.609083);
-      planetLayers.sort((a, b) => {
-          const distanceA = a.getBounds().getCenter().distanceTo(sunLatLng);
-          const distanceB = b.getBounds().getCenter().distanceTo(sunLatLng);
-          return distanceB - distanceA;
-      });
+      })).on('ready', function() {
+        const sunLatLng = L.latLng(-25.280945, -57.609083);
+        planetLayers.sort((a, b) => {
+            const distanceA = a.getBounds().getCenter().distanceTo(sunLatLng);
+            const distanceB = b.getBounds().getCenter().distanceTo(sunLatLng);
+            return distanceB - distanceA;
+        });
 
-      planetLayers.forEach(layer => {
-          layer.addTo(map);
-          const name = layer.feature.properties.name.split(' - ')[0];
+        planetLayers.forEach(layer => {
+            layer.addTo(map);
+            const name = layer.feature.properties.name.split(' - ')[0];
 
-          layer.on('click', function(e) {
-            // Lógica para mostrar información de la órbita, siempre activa
-            const info = planetData[name];
-            const translatedName = translate(info.name);
-            const translatedDescription = translate(info.description);
-            const popupContent = `
-              <h4>${translatedName}</h4>
-              <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
-            `;
-            L.marker(e.latlng).addTo(markersGroup)
-              .bindPopup(popupContent)
-              .openPopup();
+            layer.on('click', function(e) {
+              // Lógica para mostrar información de la órbita, siempre activa
+              const info = planetData[name];
+              const translatedName = translate(info.name);
+              const translatedDescription = translate(info.description);
+              const popupContent = `
+                <h4>${translatedName}</h4>
+                <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
+              `;
+              L.marker(e.latlng).addTo(markersGroup)
+                .bindPopup(popupContent)
+                .openPopup();
 
-            // Si el juego está activo, ejecuta la lógica del juego
-            if (gameActive) {
-                if (name === currentPlanet.name) {
-                    score++;
-                    document.getElementById('score').textContent = translate('score') + score;
-                    answeredPlanets.push(currentPlanet.name);
-                    nextQuestion();
-                } else {
-                    lives--;
-                    document.getElementById('lives').textContent = translate('lives') + lives;
-                    const clickedName = translate(name);
-                    const livesText = lives === 1 ? translate('incorrect-alert-lives-end-single') : translate('incorrect-alert-lives-end-plural');
-                    alert(`${translate('incorrect-alert-start')}${clickedName}${translate('incorrect-alert-lives-end')}${lives} ${livesText}`);
-                    if (lives <= 0) {
-                        gameOver();
-                    }
-                }
-            }
-          });
-      });
+              // Si el juego está activo, ejecuta la lógica del juego
+              if (gameActive) {
+                  if (name === currentPlanet.name) {
+                      score++;
+                      document.getElementById('score').textContent = translate('score') + score;
+                      answeredPlanets.push(currentPlanet.name);
+                      nextQuestion();
+                  } else {
+                      lives--;
+                      document.getElementById('lives').textContent = translate('lives') + lives;
+                      const clickedName = translate(name);
+                      const livesText = lives === 1 ? translate('incorrect-alert-lives-end-single') : translate('incorrect-alert-lives-end-plural');
+                      alert(`${translate('incorrect-alert-start')}${clickedName}${translate('incorrect-alert-lives-end')}${lives} ${livesText}`);
+                      if (lives <= 0) {
+                          gameOver();
+                      }
+                  }
+              }
+            });
+        });
 
-      map.fitBounds(kmlLayer.getBounds());
-      displayRecord();
-    }).addTo(map);
+        map.fitBounds(kmlLayer.getBounds());
+        displayRecord();
+      }).addTo(map);
+    }
 
     function updateUI() {
       const lang = currentLang;
@@ -474,15 +532,15 @@
       timer = 0;
       gameActive = true;
       answeredPlanets = [];
-      document.getElementById('score').textContent = "Puntos: " + score;
-      document.getElementById('attempts').textContent = "Intentos: " + attempts;
-      document.getElementById('lives').textContent = "Vidas: " + lives;
-      document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
+      document.getElementById('score').textContent = translate('score') + score;
+      document.getElementById('attempts').textContent = translate('attempts') + attempts;
+      document.getElementById('lives').textContent = translate('lives') + lives;
+      document.getElementById('timer').textContent = translate('timer') + timer + "s";
       markersGroup.clearLayers();
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
         timer++;
-        document.getElementById('timer').textContent = "Tiempo: " + timer + "s";
+        document.getElementById('timer').textContent = translate('timer') + timer + "s";
       }, 1000);
       nextQuestion();
     }
@@ -517,7 +575,7 @@
 
       const randomIndex = Math.floor(Math.random() * remainingPlanets.length);
       currentPlanet = remainingPlanets[randomIndex];
-      document.getElementById('question').textContent = "¿Dónde está " + translate(currentPlanet.name) + "?";
+      document.getElementById('question').textContent = `${translate('where-is')}${translate(currentPlanet.name)}?`;
     }
 
     function gameWin() {
@@ -528,15 +586,15 @@
         const isNewRecord = !recordTime || timer < parseInt(recordTime);
 
         if (isNewRecord) {
-            const playerName = prompt(`¡Nuevo récord! Has completado el juego en ${timer} segundos. Por favor, introduce tu nombre:`);
+            const playerName = prompt(`${translate('game-win-new-record')}${timer}${translate('game-win-name-prompt')}`);
             if (playerName) {
                 setCookie("recordTime", timer, 365);
                 setCookie("recordName", playerName, 365);
-                alert(`¡Felicidades, ${playerName}! Has establecido un nuevo récord.`);
+                alert(`${translate('game-win-new-record-alert')}${playerName}${translate('game-win-new-record-end-alert')}`);
                 displayRecord();
             }
         } else {
-            alert(`¡Felicidades! Has encontrado todos los planetas. Tu puntaje final es: ${score} y tu tiempo fue ${timer} segundos.`);
+            alert(`${translate('game-win-no-record-alert')}${score}${translate('game-win-no-record-time')}${timer}${translate('game-win-no-record-time-end')}`);
         }
 
         resetStats();
@@ -566,15 +624,23 @@
       if (window.switchStates['language-switch'] === 'on') {
         currentLang = 'es';
         currentKML = 'solarsystem_es.kml';
-        console.log('Es');
+        switchLanguage('es');
       } else {
         currentLang = 'en';
         currentKML = 'solarsystem_en.kml';
-        console.log('EN');
+        switchLanguage('es');
       }
-
-      updateUI();
     });
+
+
+    const toggleButton = document.getElementById('toggle-button');
+    const gamePanel = document.querySelector('.game-panel');
+    toggleButton.addEventListener('click', () => {
+        gamePanel.classList.toggle('expanded');
+        toggleButton.textContent = gamePanel.classList.contains('expanded') ? '▲' : '▼';
+    });
+
+    switchLanguage('es');
 
   </script>
 </body>
