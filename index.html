@@ -241,6 +241,10 @@
     <i id="settings-button" class="fa-solid fa-gear fa-spin-hover"></i>
     <div id="settings-menu">
         <div class="settings-item">
+            <input type="checkbox" id="toggle-sun" checked>
+            <label for="toggle-sun">El Sol</label>
+        </div>
+        <div class="settings-item">
             <input type="checkbox" id="toggle-pluto" checked>
             <label for="toggle-pluto">Plutón y el Cinturón de Kuiper</label>
         </div>
@@ -466,6 +470,7 @@
 
     function saveSettings() {
         const settings = {
+            toggleSun: document.getElementById('toggle-sun').checked,
             togglePluto: document.getElementById('toggle-pluto').checked,
             toggleVoyager1: document.getElementById('toggle-voyager1').checked,
             toggleVoyager2: document.getElementById('toggle-voyager2').checked,
@@ -479,6 +484,7 @@
         const settingsCookie = getCookie('gameSettings');
         if (settingsCookie) {
             const settings = JSON.parse(settingsCookie);
+            document.getElementById('toggle-sun').checked = settings.toggleSun;
             document.getElementById('toggle-pluto').checked = settings.togglePluto;
             document.getElementById('toggle-voyager1').checked = settings.toggleVoyager1;
             document.getElementById('toggle-voyager2').checked = settings.toggleVoyager2;
@@ -504,11 +510,16 @@
 
     function getExcludedPlanets() {
         const excluded = [];
+        const sunCheckbox = document.getElementById('toggle-sun');
         const plutoCheckbox = document.getElementById('toggle-pluto');
         const voyager1Checkbox = document.getElementById('toggle-voyager1');
         const voyager2Checkbox = document.getElementById('toggle-voyager2');
         const ceresCheckbox = document.getElementById('toggle-ceres');
 
+        if (!sunCheckbox.checked) {
+            excluded.push('Sun');
+            excluded.push('Sol');
+        }
         if (!plutoCheckbox.checked) {
             excluded.push('Pluto in the Kuiper Belt');
             excluded.push('Plutón en el Cinturón de Kuiper');
@@ -571,13 +582,13 @@
             if (name !== 'Sun') {
               const description = feature.properties.description;
               if (description) {
-                const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
-                const cleanDescription = htmlContent.replace(/<[^>]*>/g, '').replace(/[\n\t]/g, '');
+                const htmlContent = description.replace(/<br \/>/g, '<br>');
+                //const cleanDescription = htmlContent.replace(/<[^>]*>/g, '').replace(/[\n\t]/g, '');
 
                 const planetInfo = {
                   name: name,
                   latlng: layer.getBounds().getCenter(),
-                  description: cleanDescription,
+                  description: htmlContent,
                   layer: layer
                 };
 
@@ -605,10 +616,10 @@
               // Lógica para mostrar información de la órbita, siempre activa
               const info = planetData[name];
               const translatedName = translate(info.name);
-              const translatedDescription = translate(info.description);
+              //const translatedDescription = translate(info.description);
               const popupContent = `
                 <h4>${translatedName}</h4>
-                <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${translatedDescription}</p>
+                <p><b>${translate('correct-info-start')}${translatedName}:</b><br>${info.description}</p>
               `;
               L.marker(e.latlng).addTo(markersGroup)
                 .bindPopup(popupContent)
@@ -784,6 +795,7 @@
         settingsMenu.classList.toggle('visible');
     });
 
+    document.getElementById('toggle-sun').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
     document.getElementById('toggle-pluto').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
     document.getElementById('toggle-voyager1').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
     document.getElementById('toggle-voyager2').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
