@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Juego del Sistema Solar</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js"></script>
   <script src="switch-checkbox.js"></script>
@@ -62,6 +63,16 @@
       #toggle-button {
         display: none;
       }
+    }
+
+    #settings-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 20px;
+        color: #555;
+        cursor: pointer;
+        z-index: 1001;
     }
 
     .game-panel button {
@@ -203,6 +214,21 @@
       background-color: white;
     }
 
+    #settings-menu {
+      display: none;
+      margin-top: 10px;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+    #settings-menu.visible {
+      display: block;
+    }
+    .settings-item {
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
   </style>
 </head>
 <body>
@@ -211,6 +237,25 @@
     <div id="panel-header">
         <h3 id="game-title">¿Dónde está...?</h3>
         <button id="toggle-button">▼</button>
+    </div>
+    <i id="settings-button" class="fa-solid fa-gear fa-spin-hover"></i>
+    <div id="settings-menu">
+        <div class="settings-item">
+            <input type="checkbox" id="toggle-pluto" checked>
+            <label for="toggle-pluto">Plutón y el Cinturón de Kuiper</label>
+        </div>
+        <div class="settings-item">
+            <input type="checkbox" id="toggle-voyager1" checked>
+            <label for="toggle-voyager1">Voyager 1</label>
+        </div>
+        <div class="settings-item">
+            <input type="checkbox" id="toggle-voyager2" checked>
+            <label for="toggle-voyager2">Voyager 2</label>
+        </div>
+        <div class="settings-item">
+            <input type="checkbox" id="toggle-ceres" checked>
+            <label for="toggle-ceres">Ceres</label>
+        </div>
     </div>
     <p id="question">Haz clic en el planeta correcto.</p>
     <button id="startGame">Empezar</button>
@@ -241,7 +286,7 @@
 
   <script>
     // Inicializar mapa
-    const map = L.map('map').setView([-25.280945, -57.609083], 2);
+    const map = L.map('map').setView([-25.280945, -57.609083], 10);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
@@ -298,7 +343,17 @@
       'Saturn': ['#c0a480', '#736b5a', '#dab778', '#f3ce88', '#ff33ff'],
       'Uranus': ['#d0ecf0', '#95bbbe', '#688a8d', '#3f575a', '#ffcccc'],
       'Neptune': ['#5e96f4', '#3e44f0', '#102C5A', '#e95a53', '#ffff33'],
-      'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99', '#ff9966']
+      'Pluto in the Kuiper Belt': ['#fff1d5', '#968570', '#ddc4af', '#ccba99', '#ff9966'],
+      'Sol': ['#FFE484', '#FFCC33', '#FC9601', '#D14009', '#D14009'],
+      'Mercurio': ['#b7c9D0', '#0375a4', '#025472', '#14162c', '#ffcc99'],
+      'Venus': ['#f0debe', '#f1be8b', '#bd998a', '#222d41', '#ff66ff'],
+      'Tierra': ['#dfebf5', '#b8cbdb', '#6388a8', '#426b8f', '#ffff66'],
+      'Marte': ['#91aa5f', '#d85e3c', '#a43f2f', '#091726', '#ff3333'],
+      'Jupiter': ['#d8c2b1', '#d77133', '#C12F1E', '#572F28', '#ff3366'],
+      'Saturno': ['#c0a480', '#736b5a', '#dab778', '#f3ce88', '#ff33ff'],
+      'Urano': ['#d0ecf0', '#95bbbe', '#688a8d', '#3f575a', '#ffcccc'],
+      'Neptuno': ['#5e96f4', '#3e44f0', '#102C5A', '#e95a53', '#ffff33'],
+      'Plutón en el Cinturón de Kuiper': ['#fff1d5', '#968570', '#ddc4af', '#ccba99', '#ff9966']
     };
 
     const uiTranslations = {
@@ -409,6 +464,28 @@
       }
     }
 
+    function saveSettings() {
+        const settings = {
+            togglePluto: document.getElementById('toggle-pluto').checked,
+            toggleVoyager1: document.getElementById('toggle-voyager1').checked,
+            toggleVoyager2: document.getElementById('toggle-voyager2').checked,
+            toggleCeres: document.getElementById('toggle-ceres').checked
+        };
+        setCookie('gameSettings', JSON.stringify(settings), 365);
+    }
+
+    // NUEVO: Carga el estado de los checkboxes desde una cookie
+    function loadSettings() {
+        const settingsCookie = getCookie('gameSettings');
+        if (settingsCookie) {
+            const settings = JSON.parse(settingsCookie);
+            document.getElementById('toggle-pluto').checked = settings.togglePluto;
+            document.getElementById('toggle-voyager1').checked = settings.toggleVoyager1;
+            document.getElementById('toggle-voyager2').checked = settings.toggleVoyager2;
+            document.getElementById('toggle-ceres').checked = settings.toggleCeres;
+        }
+    }
+
     function switchLanguage(lang) {
         currentLang = lang;
         let kmlFilePath = currentKML;
@@ -425,7 +502,40 @@
         updateUI();
     }
 
+    function getExcludedPlanets() {
+        const excluded = [];
+        const plutoCheckbox = document.getElementById('toggle-pluto');
+        const voyager1Checkbox = document.getElementById('toggle-voyager1');
+        const voyager2Checkbox = document.getElementById('toggle-voyager2');
+        const ceresCheckbox = document.getElementById('toggle-ceres');
+
+        if (!plutoCheckbox.checked) {
+            excluded.push('Pluto in the Kuiper Belt');
+            excluded.push('Plutón en el Cinturón de Kuiper');
+        }
+        if (!voyager1Checkbox.checked) {
+            excluded.push('Voyager 1');
+        }
+        if (!voyager2Checkbox.checked) {
+            excluded.push('Voyager 2');
+        }
+        if (!ceresCheckbox.checked) {
+            excluded.push('Ceres in the Asteroid Belt');
+            excluded.push('Ceres en el cinturón de asteroides');
+        }
+        return excluded;
+    }
+
     function loadKML(kmlFilePath) {
+      const excludedNames = getExcludedPlanets();
+
+      if (kmlLayer) {
+        map.removeLayer(kmlLayer);
+      }
+      
+      planetData = {};
+      planetLayers = [];
+
       // Cargar el KML y almacenar la información de los planetas
       kmlLayer = omnivore.kml(kmlFilePath, null, L.geoJson(null, {
         style: function(feature) {
@@ -443,13 +553,22 @@
             weight: 2
           };
         },
+        filter: function(feature, layer) {
+          const name = feature.properties.name.split(' - ')[0];
+          return !excludedNames.includes(name);
+        },
         onEachFeature: function(feature, layer) {
           if (feature.properties && feature.properties.name) {
             const name = feature.properties.name.split(' - ')[0];
 
+            if (excludedNames.includes(name)) {
+              return;
+            }
+
+
             console.log(name);
 
-            if (name !== '') { //Sun
+            if (name !== 'Sun') {
               const description = feature.properties.description;
               if (description) {
                 const htmlContent = description.replace(/<br \/>/g, '<br>').replace(/<br>/g, '');
@@ -516,7 +635,11 @@
             });
         });
 
-        map.fitBounds(kmlLayer.getBounds());
+        if (planetLayers.length > 0) {
+          map.fitBounds(kmlLayer.getBounds());
+        } else {
+          map.setView([-25.280945, -57.609083], 2);
+        }
         displayRecord();
       }).addTo(map);
     }
@@ -654,6 +777,19 @@
         gamePanel.classList.toggle('expanded');
         toggleButton.textContent = gamePanel.classList.contains('expanded') ? '▲' : '▼';
     });
+
+    const settingsButton = document.getElementById('settings-button');
+    const settingsMenu = document.getElementById('settings-menu');
+    settingsButton.addEventListener('click', () => {
+        settingsMenu.classList.toggle('visible');
+    });
+
+    document.getElementById('toggle-pluto').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    document.getElementById('toggle-voyager1').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    document.getElementById('toggle-voyager2').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    document.getElementById('toggle-ceres').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+
+    loadSettings();
 
     switchLanguage('es');
 

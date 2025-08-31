@@ -2469,44 +2469,28 @@ min&ndash;max: 4,437,000,000&ndash;7,311,000,000 km.<br />
 </Placemark>
 <Placemark>
   <name>Voyager 1</name>
-  <description>
-    <![CDATA[
-    <b>Modelo</b><br/>
-    Inicio: órbita de la Tierra (punto sur).<br/>
-    Distancia desde el Sol (2025 aprox.): ~140 km en el modelo (163 UA).<br/>
-    Escala: 1 : 174,000,000<br/>
-    <b>Real</b><br/>
-    ~24,400 millones km (163 UA).<br/>
-    ]]>
-  </description>
-  <Style>
-    <LineStyle>
-      <color>ff0000ff</color> <!-- rojo -->
-      <width>3</width>
-    </LineStyle>
-  </Style>
+  <description><![CDATA[
+    Inicio: sur de la órbita de la Tierra.<br/>
+    Distancia desde el Sol (modelo): ≈ 144.55 km.<br/>
+    Distancia desde la órbita de la Tierra (modelo): ≈ 143.69 km.
+  ]]></description>
+  <Style><LineStyle><color>ff0000ff</color><width>3</width></LineStyle></Style>
   <LineString>
     <tessellate>1</tessellate>
     <coordinates>
-      -57.609083,-25.288706263105,0  <!-- inicio: sur de la órbita de la Tierra -->
-      -57.609083,-26.546030886115,0  <!-- fin: ~163 UA al sur a escala -->
+      -57.609083,-25.288706263105,0
+      -57.609083,-26.58583864774301,0
     </coordinates>
   </LineString>
 </Placemark>
 
-
 <Placemark>
   <name>Voyager 2</name>
-  <description>
-    <![CDATA[
-    <b>Distancias del modelo</b><br />
-    Inicio: órbita de la Tierra (~859 m).<br />
-    Posición 2025: ~117 km del Sol.<br />
-    <b>Distancias reales</b><br />
-    1 UA → lanzamiento (1977).<br />
-    136 UA → posición actual (~20,300 millones km).<br />
-    ]]>
-  </description>
+  <description><![CDATA[
+    Inicio: punto ESTE de la órbita de la Tierra.<br/>
+    Distancia desde el Sol (modelo): ≈ 120.93 km.<br/>
+    Distancia desde la órbita de la Tierra (modelo): ≈ 120.07 km.
+  ]]></description>
   <Style>
     <LineStyle>
       <color>ff00ff00</color>
@@ -2514,9 +2498,10 @@ min&ndash;max: 4,437,000,000&ndash;7,311,000,000 km.<br />
     </LineStyle>
   </Style>
   <LineString>
+    <tessellate>1</tessellate>
     <coordinates>
-      -57.609083,-25.2731837,0   <!-- punto en la órbita de la Tierra -->
-      -56.389083,-25.280945,0    <!-- posición 2025 a escala -->
+      -57.60082138194,-25.280945,0
+      -56.32082138194,-25.280945,0
     </coordinates>
   </LineString>
 </Placemark>
