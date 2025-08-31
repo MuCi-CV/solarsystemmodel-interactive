@@ -31,8 +31,7 @@
         width: 180px; /* Ancho más pequeño para el modo minimal */
       }
       .game-panel:not(.expanded) .stats,
-      .game-panel:not(.expanded) #startGame,
-      .game-panel:not(.expanded) #question {
+      .game-panel:not(.expanded) #startGame {
         display: none;
       }
       .game-panel.expanded {
@@ -56,7 +55,13 @@
       cursor: pointer;
       padding: 0;
       line-height: 1;
-      display: none;
+      width: 3rem;
+    }
+
+    @media (min-width: 600px) {
+      #toggle-button {
+        display: none;
+      }
     }
 
     .game-panel button {
@@ -69,6 +74,12 @@
       cursor: pointer;
       width: 100%;
     }
+
+    .game-panel button#toggle-button {
+      background: transparent;
+      color: #414141;
+    }
+
     .game-panel button:hover {
       background: #005fcc;
     }
@@ -198,7 +209,7 @@
   <div id="map"></div>
   <div class="game-panel">
     <div id="panel-header">
-        <h3 id="game-title">Juego: ¿Dónde está...?</h3>
+        <h3 id="game-title">¿Dónde está...?</h3>
         <button id="toggle-button">▼</button>
     </div>
     <p id="question">Haz clic en el planeta correcto.</p>
@@ -292,7 +303,7 @@
 
     const uiTranslations = {
       'es': {
-        'game-title': 'Juego: ¿Dónde está...?',
+        'game-title': '¿Dónde está...?',
         'question-initial': 'Haz clic en el planeta correcto.',
         'button-start': 'Empezar',
         'score': 'Puntos: ',
@@ -319,7 +330,7 @@
         'where-is': '¿Dónde está '
       },
       'en': {
-        'game-title': 'Game: Where is...?',
+        'game-title': 'Where is...?',
         'question-initial': 'Click on the correct planet.',
         'button-start': 'Start',
         'score': 'Score: ',
@@ -394,7 +405,7 @@
       if (recordTime && recordName) {
         recordElement.textContent = `Record: ${recordTime}s por ${recordName}`;
       } else {
-        recordElement.textContent = "No hay récord de tiempo.";
+        recordElement.textContent = translate('record-none');
       }
     }
 
@@ -610,13 +621,17 @@
       });
       if (!clickedOnOrbit) {
         lives--;
-        document.getElementById('lives').textContent = "Vidas: " + lives;
-        alert("Incorrecto. Tienes que hacer clic en una órbita.");
+        document.getElementById('lives').textContent = translate('lives') + lives;
+        alert(translate('wrong-click-alert'));
         if (lives <= 0) {
           gameOver();
         }
       }
     });
+
+    map.on('click', (e) => {
+        e.originalEvent._clicked = true;
+    }, true);
 
     document.getElementById('startGame').addEventListener('click', startGame);
 
