@@ -579,7 +579,7 @@
 
             console.log(name);
 
-            if (name !== 'Sun') {
+            if (name !== '') { //Sun || Sol
               const description = feature.properties.description;
               if (description) {
                 const htmlContent = description.replace(/<br \/>/g, '<br>');
