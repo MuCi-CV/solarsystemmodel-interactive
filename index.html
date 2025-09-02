@@ -311,7 +311,11 @@
         </div>
     </div>
     <p id="question">Haz clic en el planeta correcto.</p>
-    <button id="startGame">Empezar</button>
+    <div class="game-controls">
+      <button id="startGame">Empezar</button>
+      <button id="resetGame" style="display: none;">Reiniciar</button>
+      <button id="stopGame" style="display: none;">Parar</button>
+    </div>
     <div class="stats">
       <p id="score">Puntos: 0</p>
       <p id="attempts">Intentos: 0</p>
@@ -435,7 +439,9 @@
         'game-win-no-record-alert': '¡Felicidades! Has encontrado todos los planetas. Tu puntaje final es: ',
         'game-win-no-record-time': ' y tu tiempo fue ',
         'game-win-no-record-time-end': ' segundos.',
-        'where-is': '¿Dónde está '
+        'where-is': '¿Dónde está ',
+        'button-reset': 'Reiniciar',
+        'button-stop': 'Parar'
       },
       'en': {
         'game-title': 'Where is...?',
@@ -462,7 +468,9 @@
         'game-win-no-record-alert': 'Congratulations! You found all the planets. Your final score is: ',
         'game-win-no-record-time': ' and your time was ',
         'game-win-no-record-time-end': ' seconds.',
-        'where-is': 'Where is '
+        'where-is': 'Where is ',
+        'button-reset': 'Reset',
+        'button-stop': 'Stop'
       }
     };
 
@@ -738,11 +746,25 @@
       document.getElementById('game-title').textContent = uiTranslations[lang]['game-title'];
       document.getElementById('question').textContent = uiTranslations[lang]['question-initial'];
       document.getElementById('startGame').textContent = uiTranslations[lang]['button-start'];
+      document.getElementById('resetGame').textContent = uiTranslations[lang]['button-reset'];
+      document.getElementById('stopGame').textContent = uiTranslations[lang]['button-stop'];
       document.getElementById('score').textContent = uiTranslations[lang]['score'] + score;
       document.getElementById('attempts').textContent = uiTranslations[lang]['attempts'] + attempts;
       document.getElementById('lives').textContent = uiTranslations[lang]['lives'] + lives;
       document.getElementById('timer').textContent = uiTranslations[lang]['timer'] + timer + 's';
       displayRecord();
+    }
+
+    function updateButtonVisibility() {
+        if (gameActive) {
+            document.getElementById('startGame').style.display = 'none';
+            document.getElementById('resetGame').style.display = 'block';
+            document.getElementById('stopGame').style.display = 'block';
+        } else {
+            document.getElementById('startGame').style.display = 'block';
+            document.getElementById('resetGame').style.display = 'none';
+            document.getElementById('stopGame').style.display = 'none';
+        }
     }
 
     function startGame() {
@@ -769,7 +791,21 @@
         timer++;
         document.getElementById('timer').textContent = translate('timer') + timer + "s";
       }, 1000);
+      updateButtonVisibility();
       nextQuestion();
+    }
+
+    function resetGame() {
+        stopGame();
+        startGame();
+    }
+
+    function stopGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('question').textContent = translate('game-over-question');
+        resetStats();
+        updateButtonVisibility();
     }
 
     function gameOver() {
@@ -777,6 +813,7 @@
       clearInterval(timerInterval);
       alert(uiTranslations[currentLang]['game-over-alert'] + score + '.');
       resetStats();
+      updateButtonVisibility();
     }
 
     function resetStats() {
@@ -854,6 +891,8 @@
     }, true);
 
     document.getElementById('startGame').addEventListener('click', startGame);
+    document.getElementById('resetGame').addEventListener('click', resetGame);
+    document.getElementById('stopGame').addEventListener('click', stopGame);
 
     document.getElementById('language-switch').addEventListener('change', function () {
       if (window.switchStates['language-switch'] === 'on') {
@@ -886,6 +925,33 @@
     document.getElementById('toggle-voyager1-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
     document.getElementById('toggle-voyager2-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
     document.getElementById('toggle-ceres-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+
+    // const showCheckboxes = document.querySelectorAll('[id^="show-"]');
+    // const quizCheckboxes = document.querySelectorAll('[id^="quiz-"]');
+
+    // showCheckboxes.forEach(checkbox => {
+    //     checkbox.addEventListener('change', () => {
+    //         const quizId = 'quiz-' + checkbox.id.split('-')[1];
+    //         const quizCheckbox = document.getElementById(quizId);
+    //         if (!checkbox.checked) {
+    //             quizCheckbox.checked = false;
+    //         }
+    //         loadKML(currentKML);
+    //         saveSettings();
+    //     });
+    // });
+
+    // quizCheckboxes.forEach(checkbox => {
+    //     checkbox.addEventListener('change', () => {
+    //         const showId = 'show-' + checkbox.id.split('-')[1];
+    //         const showCheckbox = document.getElementById(showId);
+    //         if (checkbox.checked && !showCheckbox.checked) {
+    //             alert("Para incluir un objeto en el quiz, primero debe estar visible en el mapa.");
+    //             checkbox.checked = false;
+    //         }
+    //         saveSettings();
+    //     });
+    // });
 
     loadSettings();
 
