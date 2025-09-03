@@ -920,38 +920,57 @@
         settingsMenu.classList.toggle('visible');
     });
 
-    document.getElementById('toggle-sun-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
-    document.getElementById('toggle-pluto-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
-    document.getElementById('toggle-voyager1-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
-    document.getElementById('toggle-voyager2-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
-    document.getElementById('toggle-ceres-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    // document.getElementById('toggle-sun-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    // document.getElementById('toggle-pluto-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    // document.getElementById('toggle-voyager1-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    // document.getElementById('toggle-voyager2-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
+    // document.getElementById('toggle-ceres-map').addEventListener('change', () => { loadKML(currentKML); saveSettings(); });
 
-    // const showCheckboxes = document.querySelectorAll('[id^="show-"]');
-    // const quizCheckboxes = document.querySelectorAll('[id^="quiz-"]');
+    const showCheckboxes = document.querySelectorAll('[id$="-map"]');
+    const quizCheckboxes = document.querySelectorAll('[id$="-quiz"]');
 
-    // showCheckboxes.forEach(checkbox => {
-    //     checkbox.addEventListener('change', () => {
-    //         const quizId = 'quiz-' + checkbox.id.split('-')[1];
-    //         const quizCheckbox = document.getElementById(quizId);
-    //         if (!checkbox.checked) {
-    //             quizCheckbox.checked = false;
-    //         }
-    //         loadKML(currentKML);
-    //         saveSettings();
-    //     });
-    // });
+    showCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            // Obtiene la última parte del ID (ej: "sun", "pluto")
+            const idParts = checkbox.id.split('-');
+            const objectName = idParts[idParts.length - 2]; // El penúltimo elemento es el nombre (ej: "sun")
 
-    // quizCheckboxes.forEach(checkbox => {
-    //     checkbox.addEventListener('change', () => {
-    //         const showId = 'show-' + checkbox.id.split('-')[1];
-    //         const showCheckbox = document.getElementById(showId);
-    //         if (checkbox.checked && !showCheckbox.checked) {
-    //             alert("Para incluir un objeto en el quiz, primero debe estar visible en el mapa.");
-    //             checkbox.checked = false;
-    //         }
-    //         saveSettings();
-    //     });
-    // });
+            const quizId = `toggle-${objectName}-quiz`; // Construye el ID del checkbox del quiz
+            const quizCheckbox = document.getElementById(quizId);
+
+            if (quizCheckbox) { // Asegúrate de que el elemento existe antes de acceder a sus propiedades
+                if (!checkbox.checked) {
+                    quizCheckbox.checked = false;
+                }
+            } else {
+                console.warn(`No se encontró el checkbox del quiz con ID: ${quizId}`);
+            }
+            loadKML(currentKML);
+            saveSettings();
+        });
+    });
+
+    quizCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            // Obtiene la última parte del ID (ej: "sun", "pluto")
+            const idParts = checkbox.id.split('-');
+            const objectName = idParts[idParts.length - 2]; // El penúltimo elemento es el nombre (ej: "sun")
+
+            const showId = `toggle-${objectName}-map`; // Construye el ID del checkbox del mapa
+            const showCheckbox = document.getElementById(showId);
+
+            if (showCheckbox) { // Asegúrate de que el elemento existe antes de acceder a sus propiedades
+                if (checkbox.checked && !showCheckbox.checked) {
+                    alert("Para incluir un objeto en el quiz, primero debe estar visible en el mapa.");
+                    checkbox.checked = false;
+                }
+            } else {
+                console.warn(`No se encontró el checkbox del mapa con ID: ${showId}`);
+            }
+            loadKML(currentKML);
+            saveSettings();
+        });
+    });
 
     loadSettings();
 
